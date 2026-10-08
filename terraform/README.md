@@ -1,6 +1,6 @@
 # Terraform
 
-The whole Zetrax Collects stack — DynamoDB, IAM, Lambda, API Gateway, S3 and CloudFront — defined as code.
+The whole Zetrax Collects stack — DynamoDB, IAM, Lambda, API Gateway, private S3 and CloudFront (via OAC) — defined as code.
 
 State lives in `s3://zetrax-tfstate-794692801848/zetrax-collects/terraform.tfstate`, encrypted and versioned. Locking uses the S3 backend's native lockfile (Terraform ≥ 1.10), no DynamoDB table required.
 

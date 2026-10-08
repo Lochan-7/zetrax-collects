@@ -7,8 +7,8 @@ variable "github_repo" {
 }
 
 resource "aws_iam_openid_connect_provider" "github" {
-  url             = "https://token.actions.githubusercontent.com"
-  client_id_list  = ["sts.amazonaws.com"]
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
   # Real signer thumbprints for token.actions.githubusercontent.com.
   # AWS also auto-validates well-known IdPs, but IAM still enforces the list.
   thumbprint_list = [
@@ -32,7 +32,11 @@ data "aws_iam_policy_document" "github_actions_trust" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:*"]
+      # GitHub Cloud now embeds the numeric owner_id and repo_id in sub
+      # as `repo:<owner>@<owner_id>/<repo>@<repo_id>:...`; match that shape.
+      values = [
+        "repo:${split("/", var.github_repo)[0]}@*/${split("/", var.github_repo)[1]}@*:*",
+      ]
     }
   }
 }

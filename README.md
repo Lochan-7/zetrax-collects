@@ -69,6 +69,7 @@ Visit the live link above or add a `screenshot.png` to `docs/` and reference it 
 - 📱 **Works in any browser** including in-app WhatsApp/Instagram/TikTok browsers (thanks to CloudFront)
 - 🌐 **CORS-enabled API** — frontend can be hosted anywhere
 - 🤖 **Fully serverless** — zero servers to manage, scales to zero when idle
+- 🧱 **Infrastructure as code** — the whole stack is defined in Terraform (`terraform/`)
 
 ---
 
@@ -84,8 +85,15 @@ zetrax-collects/
 ├── lambda/
 │   └── lambda_function.py   # Pack opener + DynamoDB handler
 ├── iam/
-│   ├── lambda-trust.json    # Trust policy (Lambda service → assume role)
-│   └── dynamo-policy.json   # Least-privilege DynamoDB access
+│   ├── lambda-trust.json    # Trust policy (kept for reference; Terraform owns the live role)
+│   └── dynamo-policy.json   # Inline policy (kept for reference; Terraform owns the live policy)
+├── terraform/              # Infrastructure as code — the live deployment
+│   ├── versions.tf          # Providers + S3 remote state backend
+│   ├── variables.tf
+│   ├── main.tf              # DynamoDB, IAM, Lambda, API Gateway
+│   ├── frontend.tf          # S3 bucket, website, assets, CloudFront
+│   ├── outputs.tf
+│   └── README.md
 └── docs/
     └── (optional screenshots, architecture diagrams)
 ```
@@ -96,92 +104,23 @@ zetrax-collects/
 
 ### Prerequisites
 - AWS account with CLI configured (`aws configure`)
-- Region: `ap-southeast-1` (adjust if desired)
-- Python 3.12 (for Lambda packaging)
+- [Terraform](https://developer.hashicorp.com/terraform/install) ≥ 1.10
+- Python 3.12 (for Lambda packaging — Terraform zips the source itself)
 
-### 1. Create the DynamoDB table
-
-```bash
-aws dynamodb create-table \
-  --table-name zetrax-pack-history \
-  --attribute-definitions AttributeName=pack_id,AttributeType=S \
-  --key-schema AttributeName=pack_id,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST \
-  --region ap-southeast-1
-```
-
-### 2. Create the IAM role for Lambda
+### Deploy
 
 ```bash
-aws iam create-role --role-name zetrax-pack-role \
-  --assume-role-policy-document file://iam/lambda-trust.json
-
-aws iam attach-role-policy --role-name zetrax-pack-role \
-  --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-
-aws iam put-role-policy --role-name zetrax-pack-role \
-  --policy-name DynamoDBAccess \
-  --policy-document file://iam/dynamo-policy.json
+cd terraform
+terraform init
+terraform apply
 ```
 
-> ⚠️ Update the account ID / region in `iam/dynamo-policy.json` first.
+That provisions DynamoDB, IAM, Lambda, API Gateway, S3 and CloudFront in one go. The site URL is printed as the `site_url` output. See [`terraform/README.md`](terraform/README.md) for details, including how to point the backend at your own state bucket.
 
-### 3. Deploy the Lambda
+### Day-two updates
 
-```bash
-cd lambda
-zip -r ../function.zip lambda_function.py
-cd ..
-
-aws lambda create-function --function-name zetrax-pack-opener \
-  --runtime python3.12 \
-  --role arn:aws:iam::YOUR_ACCOUNT:role/zetrax-pack-role \
-  --handler lambda_function.lambda_handler \
-  --zip-file fileb://function.zip \
-  --region ap-southeast-1
-```
-
-### 4. Create the API Gateway
-
-```bash
-aws apigatewayv2 create-api \
-  --name zetrax-pack-api \
-  --protocol-type HTTP \
-  --target arn:aws:lambda:ap-southeast-1:YOUR_ACCOUNT:function:zetrax-pack-opener \
-  --cors-configuration AllowOrigins="*",AllowMethods="GET",AllowHeaders="Content-Type" \
-  --region ap-southeast-1
-```
-
-Grant API Gateway permission to invoke the Lambda:
-
-```bash
-aws lambda add-permission --function-name zetrax-pack-opener \
-  --statement-id APIGatewayInvoke \
-  --action lambda:InvokeFunction \
-  --principal apigateway.amazonaws.com \
-  --source-arn "arn:aws:execute-api:ap-southeast-1:YOUR_ACCOUNT:API_ID/*/*" \
-  --region ap-southeast-1
-```
-
-### 5. Deploy the frontend
-
-Update the `API_BASE` constant at the bottom of `frontend/index.html` with your API Gateway URL, then:
-
-```bash
-aws s3 mb s3://your-bucket-name --region ap-southeast-1
-aws s3 website s3://your-bucket-name/ --index-document index.html
-# (apply public-read bucket policy)
-aws s3 cp frontend/index.html s3://your-bucket-name/
-aws s3 cp frontend/banner.jpg s3://your-bucket-name/
-```
-
-### 6. (Optional) Add CloudFront for HTTPS
-
-Create a distribution with the S3 website endpoint as origin:
-- Origin type: **Custom (Other)**
-- Origin protocol: **HTTP Only**
-- Viewer protocol: **Redirect HTTP to HTTPS**
-- Default root object: `index.html`
+- **Lambda code:** edit `lambda/lambda_function.py` and run `terraform apply`.
+- **Frontend:** edit anything under `frontend/` and run `terraform apply`. For a fresh copy immediately, invalidate CloudFront: `aws cloudfront create-invalidation --distribution-id $(terraform -chdir=terraform output -raw cloudfront_distribution_id) --paths '/*'`.
 
 ---
 

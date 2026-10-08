@@ -1,14 +1,3 @@
-"""
-Zetrax Pack Opener Lambda
--------------------------
-Simulates opening a Pokémon TCG booster pack with weighted-random rarity.
-Saves each opened pack to DynamoDB and returns the latest 8 pulls.
-
-Routes handled:
-  - Default (any method/path):      open a pack + return history
-  - GET /?history=1                 return history only, do not open a pack
-"""
-
 import json
 import random
 import uuid
@@ -38,18 +27,15 @@ CARDS = [
     {"name": "Pikachu Illustrator",  "rarity": "Chase",      "hp": 999, "type": "Electric"},
 ]
 
-RARITY_WEIGHTS = {
-    "Common": 55, "Uncommon": 25, "Rare": 13,
-    "Ultra Rare": 5, "Secret Rare": 1.5, "Chase": 0.5,
-}
+RARITY_WEIGHTS = {"Common": 55, "Uncommon": 25, "Rare": 13, "Ultra Rare": 5, "Secret Rare": 1.5, "Chase": 0.5}
 RARITY_ORDER = ["Common", "Uncommon", "Rare", "Ultra Rare", "Secret Rare", "Chase"]
+RARE_PLUS_MIN_IDX = RARITY_ORDER.index("Rare")
 
 dynamodb = boto3.client("dynamodb")
 TABLE = "zetrax-pack-history"
 
 
 def draw_one():
-    """Pick one card using weighted-random rarity."""
     rarities = list(RARITY_WEIGHTS.keys())
     weights = list(RARITY_WEIGHTS.values())
     chosen_rarity = random.choices(rarities, weights=weights, k=1)[0]
@@ -58,7 +44,6 @@ def draw_one():
 
 
 def save_pack(pack_id, cards, rarest):
-    """Write an opened pack to DynamoDB."""
     dynamodb.put_item(
         TableName=TABLE,
         Item={
@@ -71,7 +56,6 @@ def save_pack(pack_id, cards, rarest):
 
 
 def get_recent_packs(limit=8):
-    """Scan the table and return the N most recent packs."""
     resp = dynamodb.scan(TableName=TABLE, Limit=100)
     packs = []
     for item in resp.get("Items", []):
@@ -83,6 +67,31 @@ def get_recent_packs(limit=8):
         })
     packs.sort(key=lambda p: p["opened_at"], reverse=True)
     return packs[:limit]
+
+
+def get_stats():
+    """Scan the whole table to compute aggregate stats."""
+    total = 0
+    rare_plus = 0
+    chases = 0
+    paginator = dynamodb.get_paginator("scan")
+    for page in paginator.paginate(TableName=TABLE, ProjectionExpression="rarest"):
+        for item in page.get("Items", []):
+            total += 1
+            rarity = item.get("rarest", {"S": "Common"})["S"]
+            try:
+                idx = RARITY_ORDER.index(rarity)
+                if idx >= RARE_PLUS_MIN_IDX:
+                    rare_plus += 1
+                if rarity == "Chase":
+                    chases += 1
+            except ValueError:
+                pass
+    return {
+        "total_packs": total,
+        "rare_plus": rare_plus,
+        "chases": chases,
+    }
 
 
 def response(body):
@@ -98,14 +107,13 @@ def response(body):
 
 def lambda_handler(event, context):
     params = event.get("queryStringParameters") or {}
+    stats = get_stats()
 
-    # History-only mode: skip pack generation
     if params.get("history") == "1":
-        return response({"recent": get_recent_packs(8)})
+        return response({"recent": get_recent_packs(8), "stats": stats})
 
-    # Normal mode: open a new pack and persist it
     pack = [draw_one() for _ in range(5)]
     rarest = max([c["rarity"] for c in pack], key=lambda r: RARITY_ORDER.index(r))
     pack_id = str(uuid.uuid4())[:8]
     save_pack(pack_id, pack, rarest)
-    return response({"pack": pack, "recent": get_recent_packs(8)})
+    return response({"pack": pack, "recent": get_recent_packs(8), "stats": stats})

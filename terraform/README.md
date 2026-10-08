@@ -4,6 +4,8 @@ The whole Zetrax Collects stack — DynamoDB, IAM, Lambda, API Gateway, private 
 
 State lives in `s3://zetrax-tfstate-794692801848/zetrax-collects/terraform.tfstate`, encrypted and versioned. Locking uses the S3 backend's native lockfile (Terraform ≥ 1.10), no DynamoDB table required.
 
+> ⚠️ The state bucket is **not** managed by this Terraform (would be chicken-and-egg). It was created by hand once; if you ever lose it, re-create it with versioning + SSE and the same name, then `terraform init` will reconnect. Local `*.tfstate` files are in [`.gitignore`](.gitignore) — state must never be committed. It contains plaintext secrets like IAM policy JSON and the Lambda source hash, and only the S3 copy is authoritative.
+
 ## Usage
 
 ```bash

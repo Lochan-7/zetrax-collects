@@ -58,6 +58,7 @@ data "archive_file" "lambda" {
 
 resource "aws_lambda_function" "pack_opener" {
   function_name    = "${var.name_prefix}-pack-opener"
+  description      = "Opens a weighted-random Pokemon TCG pack and stores it in DynamoDB."
   role             = aws_iam_role.lambda.arn
   runtime          = var.lambda_runtime
   handler          = "lambda_function.lambda_handler"

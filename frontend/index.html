@@ -254,6 +254,9 @@
     .play-overlay {
       position: absolute;
       inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0) 100%);
       transition: background 0.2s ease;
     }
@@ -261,11 +264,8 @@
       background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.1) 100%);
     }
     .play-btn {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      width: 40px;
-      height: 40px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.95);
       display: flex;
@@ -280,10 +280,10 @@
       display: block;
       width: 0;
       height: 0;
-      border-left: 12px solid #0a0a0f;
-      border-top: 7px solid transparent;
-      border-bottom: 7px solid transparent;
-      margin-left: 3px;
+      border-left: 16px solid #0a0a0f;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      margin-left: 4px;
     }
 
     .content-footer {
@@ -299,91 +299,559 @@
       font-weight: 600;
     }
 
-    .pack-btn {
-      display: block;
-      margin: 0 auto 20px;
-      padding: 22px 44px;
+    /* ===== 30th Celebration Pack Opener ===== */
+    .pack-opener {
+      margin: 20px auto 40px;
+      min-height: 420px;
+      position: relative;
+    }
+    .pack-stage { display: flex; flex-direction: column; align-items: center; gap: 24px; }
+    .reveal-stage { display: none; flex-direction: column; align-items: center; gap: 30px; }
+    .pack-opener.state-revealing .pack-stage,
+    .pack-opener.state-done .pack-stage { display: none; }
+    .pack-opener.state-revealing .reveal-stage,
+    .pack-opener.state-done .reveal-stage { display: flex; }
+
+    /* Booster pack visual - two halves for ripping effect */
+    .booster-pack {
+      position: relative;
+      width: 220px;
+      height: 340px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      filter: drop-shadow(0 20px 40px rgba(255, 190, 11, 0.4));
+    }
+    .booster-pack:hover { transform: scale(1.03) translateY(-4px); }
+
+    .pack-half {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background:
+        linear-gradient(135deg, #1a0f00 0%, #3d2600 30%, #ffd700 50%, #3d2600 70%, #1a0f00 100%);
+      background-size: 220% 220%;
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.5) inset;
+      overflow: hidden;
+      animation: pack-shine 6s ease-in-out infinite;
+      transform-origin: center;
+    }
+    /* Jagged tear line at ~28% from top */
+    .pack-half-top {
+      clip-path: polygon(
+        0 0, 100% 0,
+        100% 25%, 94% 28%, 88% 24%, 82% 28%, 76% 25%, 70% 29%, 64% 25%, 58% 28%,
+        52% 25%, 46% 28%, 40% 24%, 34% 29%, 28% 25%, 22% 28%, 16% 25%, 10% 28%, 4% 25%,
+        0 27%
+      );
+    }
+    .pack-half-bottom {
+      clip-path: polygon(
+        0 27%, 4% 25%, 10% 28%, 16% 25%, 22% 28%, 28% 25%, 34% 29%, 40% 24%, 46% 28%,
+        52% 25%, 58% 28%, 64% 25%, 70% 29%, 76% 25%, 82% 28%, 88% 24%, 94% 28%, 100% 25%,
+        100% 100%, 0 100%
+      );
+    }
+    @keyframes pack-shine {
+      0%, 100% { background-position: 0% 50%; }
+      50%      { background-position: 100% 50%; }
+    }
+    .pack-logo-img {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85%;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+      pointer-events: none;
+    }
+    .pack-foil {
+      position: absolute;
+      top: 55%;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: linear-gradient(90deg,
+        transparent, rgba(255,255,255,0.6), rgba(255,0,128,0.5),
+        rgba(0,200,255,0.5), rgba(255,255,255,0.6), transparent);
+      background-size: 300% 100%;
+      animation: foil-move 3s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes foil-move { to { background-position: 300% 0; } }
+    .pack-pikachu {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 60px;
+      filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.8));
+      pointer-events: none;
+    }
+
+    /* Rip animation: top physically tears off and flies away */
+    .pack-opener.state-opening .pack-half-top {
+      animation: rip-top 0.9s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+    }
+    .pack-opener.state-opening .pack-half-bottom {
+      animation: rip-bottom 1.1s ease-in forwards;
+    }
+    .pack-opener.state-opening .booster-pack:hover { transform: none; }
+    @keyframes rip-top {
+      0%   { transform: translateY(0) translateX(0) rotate(0); opacity: 1; }
+      15%  { transform: translateY(-4px) translateX(-2px) rotate(-1deg); }
+      25%  { transform: translateY(-2px) translateX(2px) rotate(1deg); }
+      100% { transform: translateY(-280px) translateX(-80px) rotate(-35deg); opacity: 0; }
+    }
+    @keyframes rip-bottom {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      30%  { transform: translateY(0) scale(1); }
+      55%  { transform: translateY(2px) scale(1.03); opacity: 1; }
+      100% { transform: translateY(50px) scale(1.1); opacity: 0; }
+    }
+    .pack-opener.state-opening::before {
+      content: "";
+      position: absolute;
+      top: 42%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, white 0%, rgba(255,215,0,0.8) 30%, transparent 70%);
+      animation: pack-flash 1.1s forwards;
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes pack-flash {
+      0%   { width: 20px; height: 20px; opacity: 0; }
+      25%  { opacity: 0; }
+      40%  { width: 100px; height: 100px; opacity: 1; }
+      100% { width: 700px; height: 700px; opacity: 0; }
+    }
+
+    .rip-btn {
+      padding: 16px 36px;
+      background: linear-gradient(90deg, #ffd700, #ff6b00, #ffd700);
+      background-size: 200% auto;
+      color: #1a0a00;
+      border: none;
+      border-radius: 12px;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(255, 190, 11, 0.5);
+      animation: shine-btn 3s linear infinite;
+      transition: transform 0.2s ease;
+    }
+    @keyframes shine-btn { to { background-position: 200% center; } }
+    .rip-btn:hover { transform: translateY(-2px) scale(1.03); }
+    .rip-btn:disabled { opacity: 0.6; cursor: wait; }
+
+    /* Facedown row - cards to tap */
+    .facedown-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      min-height: 180px;
+      align-items: center;
+    }
+    .reveal-prompt {
+      font-size: 0.72rem;
+      color: #ffd700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      text-align: center;
+      margin: -10px 0 0;
+      opacity: 0.85;
+      animation: prompt-pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes prompt-pulse { 0%,100%{opacity:0.6;} 50%{opacity:1;} }
+
+    .card3d {
+      width: 95px;
+      height: 133px;
+      perspective: 1000px;
+      cursor: default;
+      transition: transform 0.3s ease;
+      opacity: 0.5;
+      filter: grayscale(0.4);
+    }
+    .card3d.next {
+      cursor: pointer;
+      opacity: 1;
+      filter: none;
+      animation: card-ready 1.3s ease-in-out infinite;
+    }
+    .card3d.next:hover { transform: translateY(-6px) scale(1.05); }
+    @keyframes card-ready {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    .card3d.next .back {
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.9), 0 0 20px rgba(255, 215, 0, 0.6), 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .facedown-row { gap: 8px; }
+    .card3d .inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card3d.flipped .inner { transform: rotateY(180deg); }
+    .card3d .face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 8px;
+      background-size: cover;
+      background-position: center;
+      overflow: hidden;
+    }
+    .card3d .back {
+      background-image: url('card-back.jpg');
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .card3d .front {
+      transform: rotateY(180deg);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    }
+    /* Card moves down (slides out) once revealed */
+    .card3d.moving {
+      animation: slide-down 0.6s forwards;
+      pointer-events: none;
+    }
+    @keyframes slide-down {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(60px) scale(0.6); opacity: 0; }
+    }
+
+    /* Revealed row (bottom accumulator) */
+    .revealed-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      min-height: 140px;
+      align-items: center;
+    }
+    .revealed-card {
+      position: relative;
+      width: 90px;
+      height: 126px;
+      border-radius: 6px;
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+    @keyframes pop-in {
+      0%   { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Rarity glow by category */
+    .card3d.rarity-filler .front,
+    .card3d.rarity-normal .front { box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .card3d.rarity-pokemon-ex .front { box-shadow: 0 0 30px rgba(131, 56, 236, 0.75); }
+    .card3d.rarity-classic-collection .front { box-shadow: 0 0 35px rgba(255, 170, 50, 0.8); }
+    .card3d.rarity-illustration-rare .front { box-shadow: 0 0 35px rgba(255, 0, 128, 0.75); }
+    .card3d.rarity-special-illustration .front {
+      box-shadow: 0 0 40px rgba(255, 0, 128, 0.7), 0 0 70px rgba(131, 56, 236, 0.5);
+    }
+    .card3d.rarity-futuristic-rare .front {
+      box-shadow: 0 0 50px rgba(0, 220, 255, 0.9), 0 0 100px rgba(131, 56, 236, 0.6);
+      animation: futuristic-pulse 1.4s ease-in-out infinite;
+    }
+    .card3d.rarity-pikachu .front { box-shadow: 0 0 35px rgba(255, 215, 0, 0.85); }
+    @keyframes futuristic-pulse {
+      0%, 100% { box-shadow: 0 0 50px rgba(0, 220, 255, 0.9), 0 0 100px rgba(131, 56, 236, 0.6); }
+      50%      { box-shadow: 0 0 80px rgba(0, 220, 255, 1), 0 0 150px rgba(255, 0, 200, 0.8); }
+    }
+
+    .revealed-card.rarity-pokemon-ex { box-shadow: 0 0 15px rgba(131, 56, 236, 0.55); }
+    .revealed-card.rarity-classic-collection { box-shadow: 0 0 18px rgba(255, 170, 50, 0.6); }
+    .revealed-card.rarity-illustration-rare { box-shadow: 0 0 20px rgba(255, 0, 128, 0.6); }
+    .revealed-card.rarity-special-illustration { box-shadow: 0 0 24px rgba(255, 0, 128, 0.55), 0 0 40px rgba(131, 56, 236, 0.4); }
+    .revealed-card.rarity-futuristic-rare {
+      box-shadow: 0 0 28px rgba(0, 220, 255, 0.8), 0 0 60px rgba(255, 0, 200, 0.5);
+      animation: pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), futuristic-pulse 1.6s ease-in-out infinite 0.5s;
+    }
+    .revealed-card.rarity-pikachu { box-shadow: 0 0 20px rgba(255, 215, 0, 0.65); }
+
+    /* === HOLOGRAPHIC SHINY EFFECT (applied to slots 4 & 5) === */
+    .card3d.shiny .front::after,
+    .revealed-card.shiny::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        115deg,
+        transparent 15%,
+        rgba(255, 255, 255, 0.2) 28%,
+        rgba(255, 100, 200, 0.35) 38%,
+        rgba(255, 215, 0, 0.4) 48%,
+        rgba(100, 220, 255, 0.4) 58%,
+        rgba(180, 100, 255, 0.3) 68%,
+        rgba(255, 255, 255, 0.2) 78%,
+        transparent 90%
+      );
+      background-size: 260% 260%;
+      mix-blend-mode: color-dodge;
+      pointer-events: none;
+      animation: holo-sheen 3.5s linear infinite;
+      z-index: 2;
+    }
+    /* Secondary sparkle layer for extra shine */
+    .card3d.shiny .front::before,
+    .revealed-card.shiny::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.25) 0%, transparent 15%),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.2) 0%, transparent 12%),
+        radial-gradient(circle at 85% 20%, rgba(255,215,0,0.3) 0%, transparent 10%);
+      mix-blend-mode: screen;
+      pointer-events: none;
+      animation: sparkle-drift 5s ease-in-out infinite;
+      z-index: 1;
+    }
+    @keyframes holo-sheen {
+      0%   { background-position: 260% 260%; }
+      100% { background-position: -160% -160%; }
+    }
+    @keyframes sparkle-drift {
+      0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+      50%      { transform: translate(4px, -3px); opacity: 1; }
+    }
+
+    /* Shiny effect in zoom view - continuous holo + mouse-tracked shine */
+    .card-zoom-tilter.shiny img { border-radius: 14px; }
+    .card-zoom-tilter.shiny::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(
+        115deg,
+        transparent 15%,
+        rgba(255, 255, 255, 0.18) 28%,
+        rgba(255, 100, 200, 0.32) 38%,
+        rgba(255, 215, 0, 0.38) 48%,
+        rgba(100, 220, 255, 0.38) 58%,
+        rgba(180, 100, 255, 0.28) 68%,
+        rgba(255, 255, 255, 0.18) 78%,
+        transparent 90%
+      );
+      background-size: 280% 280%;
+      mix-blend-mode: color-dodge;
+      pointer-events: none;
+      animation: holo-sheen 4s linear infinite;
+      z-index: 1;
+    }
+    .card-zoom-shine { z-index: 2; }
+
+    /* === GOD PACK ===
+       0.1% chance - rainbow banner + extra glow on everything */
+    .god-pack-banner {
+      font-size: 1.6rem;
+      font-weight: 900;
+      letter-spacing: 10px;
+      background: linear-gradient(90deg, #ff006e, #ffd700, #06ffa5, #3a86ff, #8338ec, #ff006e);
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+      animation: god-shine 2s linear infinite, god-pulse 1s ease-in-out infinite alternate;
+      text-align: center;
+      margin: 0 0 10px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      display: none;
+    }
+    .pack-opener.god-pack .god-pack-banner { display: block; }
+    @keyframes god-shine { to { background-position: 300% center; } }
+    @keyframes god-pulse {
+      from { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5)); }
+      to   { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(255, 215, 0, 1)); }
+    }
+    .pack-opener.god-pack .card3d .back {
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 1), 0 0 30px rgba(255, 215, 0, 0.9), 0 4px 12px rgba(0,0,0,0.5) !important;
+      animation: god-card-glow 1.5s ease-in-out infinite;
+    }
+    @keyframes god-card-glow {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(255, 215, 0, 1), 0 0 30px rgba(255, 215, 0, 0.9), 0 4px 12px rgba(0,0,0,0.5) !important; }
+      50%      { box-shadow: 0 0 0 3px rgba(255, 100, 200, 1), 0 0 50px rgba(255, 100, 200, 1), 0 4px 12px rgba(0,0,0,0.5) !important; }
+    }
+
+    .rarest-callout {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ffd700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .again-btn {
+      padding: 14px 32px;
       background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ff006e);
       background-size: 200% auto;
       color: white;
       border: none;
-      border-radius: 16px;
-      font-family: inherit;
-      font-size: 1.2rem;
-      font-weight: 800;
-      letter-spacing: 3px;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(131, 56, 236, 0.5);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      animation: shine-btn 4s linear infinite;
-    }
-    @keyframes shine-btn { to { background-position: 200% center; } }
-    .pack-btn:hover {
-      transform: translateY(-3px) scale(1.02);
-      box-shadow: 0 12px 32px rgba(131, 56, 236, 0.7);
-    }
-    .pack-btn:disabled { opacity: 0.6; cursor: wait; }
-
-    #pack-results {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-      margin-bottom: 40px;
-    }
-    .card {
-      padding: 14px 8px;
       border-radius: 12px;
-      background: #1a1a2e;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(131, 56, 236, 0.4);
+      animation: shine-btn 4s linear infinite;
+      transition: transform 0.2s ease;
+      display: none;
+    }
+    .again-btn:hover { transform: translateY(-2px) scale(1.03); }
+    .pack-opener.state-done .again-btn { display: inline-block; }
+
+    /* Chase full-screen takeover */
+    .chase-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(255,215,0,0.25), rgba(0,0,0,0.95) 70%);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 1000;
       opacity: 0;
-      transform: translateY(20px);
-      animation: reveal 0.5s ease forwards;
+      transition: opacity 0.3s ease;
     }
-    @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
-    .card:nth-child(1) { animation-delay: 0.1s; }
-    .card:nth-child(2) { animation-delay: 0.3s; }
-    .card:nth-child(3) { animation-delay: 0.5s; }
-    .card:nth-child(4) { animation-delay: 0.7s; }
-    .card:nth-child(5) { animation-delay: 0.9s; }
-    .card .name { font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-    .card .type { font-size: 0.7rem; color: #a0a0b8; margin-bottom: 6px; }
-    .card .hp { font-size: 0.8rem; color: #ff6b6b; margin-bottom: 8px; }
-    .card .rarity {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      display: inline-block;
+    .chase-overlay.active { display: flex; opacity: 1; }
+    .chase-overlay img {
+      max-width: 320px;
+      max-height: 70vh;
+      border-radius: 12px;
+      box-shadow: 0 0 80px rgba(255, 215, 0, 1), 0 0 160px rgba(255, 190, 11, 0.8);
+      animation: chase-float 2s ease-in-out infinite, chase-enter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes chase-float {
+      0%, 100% { transform: translateY(0) rotate(-1deg); }
+      50%      { transform: translateY(-10px) rotate(1deg); }
+    }
+    @keyframes chase-enter {
+      0%   { transform: scale(0.2) rotate(0); opacity: 0; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .chase-banner {
+      font-size: 2rem;
+      font-weight: 900;
+      letter-spacing: 8px;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      animation: chase-text 1.5s ease-in-out infinite;
+    }
+    @keyframes chase-text {
+      0%, 100% { transform: scale(1); }
+      50%      { transform: scale(1.08); }
+    }
+    .chase-close {
+      padding: 10px 28px;
+      background: rgba(255, 215, 0, 0.9);
+      color: #1a0a00;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
       font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      font-size: 0.85rem;
     }
-    .card.common .rarity { background: #6b7280; }
-    .card.uncommon { border-color: rgba(6, 255, 165, 0.4); box-shadow: 0 0 16px rgba(6, 255, 165, 0.15); }
-    .card.uncommon .rarity { background: #06ffa5; color: #0a0a0f; }
-    .card.rare { border-color: rgba(58, 134, 255, 0.5); box-shadow: 0 0 20px rgba(58, 134, 255, 0.3); }
-    .card.rare .rarity { background: #3a86ff; }
-    .card.ultra { border-color: rgba(131, 56, 236, 0.7); box-shadow: 0 0 28px rgba(131, 56, 236, 0.5); }
-    .card.ultra .rarity { background: linear-gradient(90deg, #ff006e, #8338ec); }
-    .card.secret {
-      background: linear-gradient(#1a1a2e, #1a1a2e) padding-box,
-                  linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b) border-box;
-      border: 2px solid transparent;
-      box-shadow: 0 0 36px rgba(255, 190, 11, 0.5);
+
+    /* Interactive card zoom */
+    .card-zoom-overlay {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(10,10,20,0.9), rgba(0,0,0,0.98));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 999;
+      perspective: 1500px;
+      padding: 20px;
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.25s ease;
     }
-    .card.secret .rarity { background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b); }
-    .card.chase {
-      background: linear-gradient(#1a1a2e, #1a1a2e) padding-box,
-                  linear-gradient(90deg, #ffd700, #ff6b00, #ffd700) border-box;
-      border: 3px solid transparent;
-      box-shadow: 0 0 60px rgba(255, 215, 0, 0.7);
-      animation: chase-glow 2s ease-in-out infinite, reveal 0.5s ease forwards;
+    .card-zoom-overlay.active {
+      display: flex;
+      opacity: 1;
     }
-    @keyframes chase-glow {
-      0%, 100% { box-shadow: 0 0 60px rgba(255, 215, 0, 0.7); }
-      50%     { box-shadow: 0 0 90px rgba(255, 215, 0, 1); }
+    .card-zoom-overlay:active { cursor: grabbing; }
+    .card-zoom-stage {
+      perspective: 1200px;
+      perspective-origin: center center;
     }
-    .card.chase .rarity { background: linear-gradient(90deg, #ffd700, #ff6b00); color: #0a0a0f; }
+    .card-zoom-tilter {
+      position: relative;
+      width: min(85vw, 360px);
+      max-height: 70vh;
+      aspect-ratio: 734 / 1024;
+      transform-style: preserve-3d;
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform;
+    }
+    @media (max-height: 700px) {
+      .card-zoom-tilter { width: min(55vh, 360px); }
+    }
+    .card-zoom-tilter img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: 14px;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.9), 0 0 60px rgba(255,215,0,0.15);
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .card-zoom-shine {
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      background: linear-gradient(
+        var(--shine-angle, 135deg),
+        transparent 30%,
+        rgba(255,255,255,0.35) 50%,
+        transparent 70%
+      );
+      opacity: var(--shine-opacity, 0);
+      pointer-events: none;
+      mix-blend-mode: overlay;
+      transition: opacity 0.2s ease;
+    }
+    .zoom-hint {
+      font-size: 0.68rem;
+      color: #a0a0b8;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-align: center;
+      margin: 0;
+      opacity: 0.7;
+    }
+    .revealed-card { cursor: pointer; transition: transform 0.2s ease; }
+    .revealed-card:hover { transform: translateY(-4px) scale(1.05); }
 
     /* Recent Pulls */
     .section-title {
@@ -581,9 +1049,55 @@
       </div>
     </section>
 
-    <h2 class="section-heading" style="margin-top:48px;">Open a Virtual Pack</h2>
-    <button id="pack-btn" class="pack-btn" onclick="openPack()">OPEN A PACK</button>
-    <div id="pack-results"></div>
+    <section class="section" id="pack-opener-section">
+      <h2 class="section-heading">30th Celebration Pack</h2>
+
+      <div class="pack-opener state-idle" id="pack-opener">
+        <div class="pack-stage">
+          <div class="booster-pack" id="booster-pack">
+            <div class="pack-half pack-half-top">
+              <img src="logo-30th.png" alt="30th Celebration" class="pack-logo-img">
+              <div class="pack-foil"></div>
+              <div class="pack-pikachu">⚡</div>
+            </div>
+            <div class="pack-half pack-half-bottom">
+              <img src="logo-30th.png" alt="30th Celebration" class="pack-logo-img">
+              <div class="pack-foil"></div>
+              <div class="pack-pikachu">⚡</div>
+            </div>
+          </div>
+          <button class="rip-btn" id="rip-btn">TAP TO RIP</button>
+        </div>
+
+        <div class="reveal-stage">
+          <p class="god-pack-banner" id="god-pack-banner">GOD PACK!</p>
+          <div class="facedown-row" id="facedown-row"></div>
+          <p class="reveal-prompt" id="reveal-prompt">Tap the glowing card</p>
+          <div class="revealed-row" id="revealed-row"></div>
+          <p class="rarest-callout" id="rarest-callout"></p>
+          <button class="again-btn" id="again-btn">OPEN ANOTHER PACK</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chase takeover overlay -->
+    <div class="chase-overlay" id="chase-overlay">
+      <div class="chase-banner">CHASE!</div>
+      <img id="chase-img" src="" alt="Chase card">
+      <button class="chase-close" id="chase-close">CONTINUE</button>
+    </div>
+
+    <!-- Interactive card zoom overlay -->
+    <div class="card-zoom-overlay" id="card-zoom-overlay">
+      <div class="card-zoom-stage">
+        <div class="card-zoom-tilter" id="card-zoom-tilter">
+          <img id="card-zoom-img" src="" alt="Card closeup">
+          <div class="card-zoom-shine"></div>
+        </div>
+      </div>
+      <p class="zoom-hint">Move your mouse / finger over the card to tilt it</p>
+      <button class="chase-close" id="card-zoom-close">CLOSE</button>
+    </div>
 
     <a class="social" href="https://youtube.com/@zetraxcollects" target="_blank" rel="noopener">
       <svg viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
@@ -601,45 +1115,216 @@
 
   <script>
     const API_URL = "https://ybyl5df5i1.execute-api.ap-southeast-1.amazonaws.com/";
-    const RARITY_CLASS = {
-      "Common": "common",
-      "Uncommon": "uncommon",
-      "Rare": "rare",
-      "Ultra Rare": "ultra",
-      "Secret Rare": "secret",
-      "Chase": "chase"
-    };
 
-    async function openPack() {
-      const btn = document.getElementById("pack-btn");
-      const results = document.getElementById("pack-results");
-      btn.disabled = true;
-      btn.textContent = "OPENING...";
-      results.innerHTML = "";
-      try {
-        const resp = await fetch(API_URL);
-        const data = await resp.json();
-        renderPack(data.pack);
-      } catch (e) {
-        results.innerHTML = "<p style='color:#ff6b6b'>Failed to open pack. Try again!</p>";
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "OPEN A PACK";
+    const rarityClass = r => "rarity-" + r.toLowerCase().replace(/\s+/g, "-");
+
+    const opener = document.getElementById("pack-opener");
+    const ripBtn = document.getElementById("rip-btn");
+    const booster = document.getElementById("booster-pack");
+    const facedownRow = document.getElementById("facedown-row");
+    const revealedRow = document.getElementById("revealed-row");
+    const revealPrompt = document.getElementById("reveal-prompt");
+    const rarestCallout = document.getElementById("rarest-callout");
+    const againBtn = document.getElementById("again-btn");
+    const chaseOverlay = document.getElementById("chase-overlay");
+    const chaseImg = document.getElementById("chase-img");
+    const chaseClose = document.getElementById("chase-close");
+    const zoomOverlay = document.getElementById("card-zoom-overlay");
+    const zoomTilter = document.getElementById("card-zoom-tilter");
+    const zoomImg = document.getElementById("card-zoom-img");
+    const zoomShine = zoomTilter.querySelector(".card-zoom-shine");
+    const zoomClose = document.getElementById("card-zoom-close");
+
+    let packData = null;
+    let revealedCount = 0;
+
+    async function startOpen() {
+      ripBtn.disabled = true;
+      opener.classList.remove("state-idle");
+      opener.classList.add("state-opening");
+
+      // Fetch pack while rip animation plays
+      let fetchPromise = fetch(API_URL).then(r => r.json()).catch(() => null);
+
+      // Wait for rip animation (0.9s) + brief pause
+      await new Promise(r => setTimeout(r, 1000));
+
+      packData = await fetchPromise;
+      if (!packData || !packData.pack) {
+        alert("Failed to open pack. Try again!");
+        resetPack();
+        return;
+      }
+
+      opener.classList.remove("state-opening");
+      opener.classList.add("state-revealing");
+      opener.classList.toggle("god-pack", !!packData.god_pack);
+      renderFacedown(packData.pack);
+    }
+
+    function renderFacedown(cards) {
+      facedownRow.innerHTML = "";
+      revealedRow.innerHTML = "";
+      rarestCallout.textContent = "";
+      revealedCount = 0;
+      revealPrompt.style.display = "block";
+
+      cards.forEach((card, i) => {
+        const el = document.createElement("div");
+        el.className = "card3d" + (card.shiny ? " shiny" : "");
+        el.dataset.index = i;
+        el.innerHTML = `
+          <div class="inner">
+            <div class="face back"></div>
+            <div class="face front" style="background-image: url('${card.image}');"></div>
+          </div>
+        `;
+        el.addEventListener("click", () => revealCard(i, el, card));
+        facedownRow.appendChild(el);
+      });
+
+      markNext();
+      // Preload card images
+      cards.forEach(c => { const img = new Image(); img.src = c.image; });
+    }
+
+    function markNext() {
+      document.querySelectorAll(".card3d.next").forEach(c => c.classList.remove("next"));
+      const next = facedownRow.querySelector(`.card3d[data-index="${revealedCount}"]`);
+      if (next) next.classList.add("next");
+    }
+
+    function revealCard(index, el, card) {
+      if (index !== revealedCount) return;
+      if (el.classList.contains("flipped")) return;
+
+      el.classList.remove("next");
+      el.classList.add("flipped", rarityClass(card.rarity));
+
+      // After flip, slide down + move to revealed row
+      setTimeout(() => {
+        el.classList.add("moving");
+        setTimeout(() => {
+          const r = document.createElement("div");
+          r.className = "revealed-card " + rarityClass(card.rarity) + (card.shiny ? " shiny" : "");
+          r.style.backgroundImage = `url('${card.image}')`;
+          r.dataset.image = card.image;
+          r.dataset.rarity = card.rarity;
+          r.dataset.shiny = card.shiny ? "1" : "0";
+          r.dataset.number = card.number;
+          revealedRow.appendChild(r);
+          el.remove();
+
+          revealedCount++;
+          if (revealedCount === 5) {
+            finishPack();
+          } else {
+            markNext();
+          }
+        }, 500);
+      }, 750);
+
+      // Chase takeover for the top-tier Futuristic Rares
+      if (card.rarity === "Futuristic Rare") {
+        setTimeout(() => showChase(card), 900);
       }
     }
 
-    function renderPack(cards) {
-      const results = document.getElementById("pack-results");
-      results.innerHTML = cards.map(card => `
-        <div class="card ${RARITY_CLASS[card.rarity] || 'common'}">
-          <div class="name">${card.name}</div>
-          <div class="type">${card.type}</div>
-          <div class="hp">${card.hp} HP</div>
-          <span class="rarity">${card.rarity}</span>
-        </div>
-      `).join("");
+    function finishPack() {
+      revealPrompt.style.display = "none";
+      rarestCallout.textContent = "Rarest Pull: " + packData.rarest + " #" +
+        packData.pack.find(c => c.rarity === packData.rarest).number;
+      opener.classList.remove("state-revealing");
+      opener.classList.add("state-done");
     }
 
+    function resetPack() {
+      opener.classList.remove("state-opening", "state-revealing", "state-done", "god-pack");
+      opener.classList.add("state-idle");
+      facedownRow.innerHTML = "";
+      revealedRow.innerHTML = "";
+      rarestCallout.textContent = "";
+      ripBtn.disabled = false;
+      packData = null;
+      revealedCount = 0;
+    }
+
+    function showChase(card) {
+      chaseImg.src = card.image;
+      chaseOverlay.classList.add("active");
+      if (navigator.vibrate) navigator.vibrate([80, 40, 80, 40, 200]);
+    }
+
+    chaseClose.addEventListener("click", () => chaseOverlay.classList.remove("active"));
+    chaseOverlay.addEventListener("click", (e) => {
+      if (e.target === chaseOverlay) chaseOverlay.classList.remove("active");
+    });
+
+    // ===== Interactive card zoom =====
+    function openCardZoom(src, shiny) {
+      zoomImg.src = src;
+      zoomTilter.classList.toggle("shiny", !!shiny);
+      zoomTilter.style.transform = "rotateX(0) rotateY(0) scale(1)";
+      zoomShine.style.setProperty("--shine-opacity", 0);
+      zoomOverlay.classList.add("active");
+    }
+    function closeCardZoom() {
+      zoomOverlay.classList.remove("active");
+    }
+    function tiltCard(clientX, clientY) {
+      const rect = zoomTilter.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = (clientX - cx) / (rect.width / 2);  // -1..1
+      const dy = (clientY - cy) / (rect.height / 2); // -1..1
+      const maxTilt = 22;
+      const rotY = Math.max(-1, Math.min(1, dx)) * maxTilt;
+      const rotX = -Math.max(-1, Math.min(1, dy)) * maxTilt;
+      zoomTilter.style.transition = "transform 0.08s linear";
+      zoomTilter.style.transform = `rotateY(${rotY}deg) rotateX(${rotX}deg) scale(1.02)`;
+      // Shine follows the tilt
+      const angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+      const opacity = Math.min(1, Math.hypot(dx, dy) * 0.6);
+      zoomShine.style.setProperty("--shine-angle", angle + "deg");
+      zoomShine.style.setProperty("--shine-opacity", opacity);
+    }
+    function resetTilt() {
+      zoomTilter.style.transition = "transform 0.4s cubic-bezier(0.2,0.8,0.2,1)";
+      zoomTilter.style.transform = "rotateX(0) rotateY(0) scale(1)";
+      zoomShine.style.setProperty("--shine-opacity", 0);
+    }
+
+    zoomOverlay.addEventListener("mousemove", (e) => tiltCard(e.clientX, e.clientY));
+    zoomOverlay.addEventListener("mouseleave", resetTilt);
+    zoomOverlay.addEventListener("touchmove", (e) => {
+      if (e.touches[0]) tiltCard(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+    zoomOverlay.addEventListener("touchend", resetTilt);
+    zoomOverlay.addEventListener("click", (e) => {
+      if (e.target === zoomOverlay) closeCardZoom();
+    });
+    zoomClose.addEventListener("click", closeCardZoom);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && zoomOverlay.classList.contains("active")) closeCardZoom();
+    });
+
+    // Delegate: clicking any revealed card opens zoom
+    revealedRow.addEventListener("click", (e) => {
+      const r = e.target.closest(".revealed-card");
+      if (r && r.dataset.image) openCardZoom(r.dataset.image, r.dataset.shiny === "1");
+    });
+
+    // Also let chase card be zoomable (click image, not just close button)
+    chaseImg.addEventListener("click", () => {
+      if (chaseImg.src) {
+        chaseOverlay.classList.remove("active");
+        openCardZoom(chaseImg.src, true); // chase is always shiny
+      }
+    });
+
+    ripBtn.addEventListener("click", startOpen);
+    booster.addEventListener("click", () => { if (opener.classList.contains("state-idle")) startOpen(); });
+    againBtn.addEventListener("click", resetPack);
   </script>
 </body>
 </html>
